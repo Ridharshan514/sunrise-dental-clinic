@@ -1,0 +1,29 @@
+# Compiled binaries and build outputs
+target/
+bin/
+*.class
+
+# Package archives
+*.war
+*.ear
+
+# IDE and Editor configurations
+.idea/
+.vscode/
+*.iml
+.settings/
+.project
+.classpath
+
+# Logs and runtime files
+*.log
+
+# Academic coursework reports and assessment documents (kept local only)
+report/
+report_backup/
+.git_backup/
+*.docx
+*.pdf
+~$*.docx
+_extracted_texts/
+*.bak
