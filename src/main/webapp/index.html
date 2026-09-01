@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental Clinic - Colombo</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <div class="logo-icon">🦷</div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h2>Sunrise Dental Clinic</h2>
+                    <span style="font-size:11px; background:#ecfdf5; color:#047857; padding:2px 8px; border-radius:12px; font-weight:600; border:1px solid #a7f3d0;">● Live System</span>
+                </div>
+                <span class="sub-brand">Colombo, Sri Lanka | Patient & Appointment Management System</span>
+            </div>
+        </div>
+        <div class="user-profile" id="userProfile" style="display: none;">
+            <a href="/database-view.html" target="_blank" class="btn btn-outline" style="font-size:12px; padding:6px 12px; text-decoration:none; display:inline-flex; align-items:center; gap:5px;" title="Open live MySQL database tables">🗄️ Database Studio</a>
+            <span class="user-badge" id="userNameRole">Staff</span>
+            <span id="userRoleBadge" class="role-badge role-admin">Role</span>
+            <button class="btn btn-outline" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Login Section (shown if not logged in) -->
+        <div id="loginSection" class="card auth-card">
+            <div class="card-header">
+                <h3>🔐 Staff Authentication</h3>
+                <p>Authorized access for Receptionists, Dentists, and Administrators.</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" required placeholder="Enter your username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+                <div id="loginAlert" class="alert alert-danger" style="display: none;"></div>
+                <button type="submit" class="btn btn-primary btn-block">Log In to System</button>
+            </form>
+            <div class="auth-hint">
+                <small>Demo Accounts: <code>reception / reception123</code> (Front Desk) | <code>dentist1 / dentist123</code> (Dental Surgeon) | <code>admin / admin123</code> (Admin)</small>
+            </div>
+        </div>
+
+        <!-- Dashboard App Section (shown after login) -->
+        <div id="appSection" style="display: none;">
+
+            <!-- Dynamic Role-Based Welcome Banner -->
+            <div id="roleWelcomeBanner" class="role-banner role-admin">
+                <div class="role-banner-content">
+                    <div class="role-banner-icon" id="roleBannerIcon">👑</div>
+                    <div>
+                        <h3 id="roleBannerTitle">System Administrator Portal</h3>
+                        <p id="roleBannerDesc">Full access to clinical booking, cashier billing, patient records, and executive financial reports.</p>
+                    </div>
+                </div>
+                <div class="role-banner-tags" id="roleBannerTags">
+                    <span class="role-pill" id="roleBannerPill">Full Admin Clearance</span>
+                    <span class="role-access-list" id="roleBannerScope">All Modules Active</span>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs with explicit IDs for RBAC control -->
+            <nav class="nav-tabs" id="mainNavTabs">
+                <button id="nav-book" class="tab-btn active" onclick="switchTab('book', this)">📅 Book Appointment</button>
+                <button id="nav-search" class="tab-btn" onclick="switchTab('search', this)">🔍 Search Appointments</button>
+                <button id="nav-billing" class="tab-btn" onclick="switchTab('billing', this)">💳 Billing & Receipts</button>
+                <button id="nav-reports" class="tab-btn" onclick="switchTab('reports', this)">📊 Decision Reports</button>
+                <button id="nav-notifications" class="tab-btn" onclick="switchTab('notifications', this)">📲 SMS & Alerts</button>
+                <button id="nav-help" class="tab-btn" onclick="switchTab('help', this)">❓ Help Guide</button>
+            </nav>
+
+            <!-- Notification Banner -->
+            <div id="statusMessage" class="alert" style="display: none;"></div>
+
+            <!-- Tab 1: Book Appointment -->
+            <div id="tab-book" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Register New Patient Appointment</h3>
+                        <p>Assigns a unique appointment number and verifies doctor schedule availability.</p>
+                    </div>
+                    <form id="bookingForm" onsubmit="handleBookAppointment(event)">
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <label>Patient Full Name *</label>
+                                <input type="text" id="patientName" required placeholder="e.g. Kamal Gunaratne">
+                            </div>
+                            <div class="form-group col">
+                                <label>Contact Number (Sri Lankan 10-digit) *</label>
+                                <input type="tel" id="patientContact" required placeholder="e.g. 0771234567" pattern="^(?:0|\+94)?[7][0-9]{8}$">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Residential Address *</label>
+                            <input type="text" id="patientAddress" required placeholder="e.g. No. 45, Galle Road, Colombo 03">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <label>Consulting Dentist *</label>
+                                <select id="dentistSelect" required>
+                                    <option value="">Select Dentist...</option>
+                                    <option value="Dr. Kasun Silva">Dr. Kasun Silva (General Surgeon - LKR 2,000)</option>
+                                    <option value="Dr. Nihal Perera">Dr. Nihal Perera (Orthodontist - LKR 2,500)</option>
+                                    <option value="Dr. Amali Fernando">Dr. Amali Fernando (Endodontist - LKR 3,000)</option>
+                                </select>
+                            </div>
+                            <div class="form-group col">
+                                <label>Treatment Type *</label>
+                                <select id="treatmentSelect" required>
+                                    <option value="">Select Treatment...</option>
+                                    <option value="Consultation & Examination">Consultation & Examination (Free Diagnostic)</option>
+                                    <option value="Teeth Cleaning & Scaling">Teeth Cleaning & Scaling (LKR 3,500)</option>
+                                    <option value="Dental Composite Filling">Dental Composite Filling (LKR 4,500)</option>
+                                    <option value="Tooth Extraction">Tooth Extraction (LKR 5,000)</option>
+                                    <option value="Root Canal Treatment (RCT)">Root Canal Treatment (RCT) (LKR 15,000)</option>
+                                    <option value="Teeth Whitening & Bleaching">Teeth Whitening & Bleaching (LKR 12,000)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <label>Appointment Date *</label>
+                                <input type="date" id="appointmentDate" required>
+                            </div>
+                            <div class="form-group col">
+                                <label>Appointment Time Slot *</label>
+                                <select id="appointmentTime" required>
+                                    <option value="">Select Time Slot...</option>
+                                    <option value="09:00 AM">09:00 AM</option>
+                                    <option value="09:45 AM">09:45 AM</option>
+                                    <option value="10:30 AM">10:30 AM</option>
+                                    <option value="11:15 AM">11:15 AM</option>
+                                    <option value="02:00 PM">02:00 PM</option>
+                                    <option value="02:45 PM">02:45 PM</option>
+                                    <option value="03:30 PM">03:30 PM</option>
+                                    <option value="04:15 PM">04:15 PM</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Confirm & Book Appointment</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab 2: Search Appointment -->
+            <div id="tab-search" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 id="searchTabHeading">Display & Search Patient Appointments</h3>
+                        <p id="searchTabSubheading">Search by unique appointment number (APP-XXXX), patient name, or Sri Lankan phone number (07XXXXXXXX).</p>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" id="searchAppNo" placeholder="Enter Appointment No (e.g. APP-1001), Patient Name, or Phone (07XXXXXXXX)" onkeydown="if(event.key==='Enter') searchAppointment()">
+                        <button class="btn btn-primary" onclick="searchAppointment()">🔍 Search</button>
+                        <button class="btn btn-secondary" onclick="loadAllAppointments()">📋 View All</button>
+                    </div>
+
+                    <div id="appointmentResultCard" style="display: none;" class="result-box"></div>
+                    <div id="appointmentsTableContainer" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Billing & Receipt -->
+            <div id="tab-billing" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Calculate & Print Patient Bill</h3>
+                        <p>Calculates total treatment costs based on procedure rates and doctor consultation fees.</p>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" id="billAppNo" placeholder="Enter Appointment Number (e.g. APP-1001)">
+                        <button class="btn btn-primary" onclick="generateBill()">Compute & Generate Bill</button>
+                    </div>
+
+                    <div id="billResultBox" style="display: none;" class="receipt-card">
+                        <div class="receipt-header">
+                            <h4>SUNRISE DENTAL CLINIC</h4>
+                            <p>No. 120, Galle Road, Colombo 03 | Tel: 011-2345678</p>
+                        </div>
+                        <hr>
+                        <div id="receiptBody"></div>
+                        <div class="receipt-actions">
+                            <button class="btn btn-primary" onclick="window.print()">🖨️ Print Receipt</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Reports -->
+            <div id="tab-reports" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 id="reportsHeading">Clinical & Financial Management Reports</h3>
+                        <p id="reportsSubheading">Facilitates data-driven decisions on scheduling, clinic revenue, and doctor allocation.</p>
+                    </div>
+                    <div class="report-buttons">
+                        <button id="btn-report-schedule" class="btn btn-outline" onclick="loadScheduleReport()">Daily Schedule Report</button>
+                        <button id="btn-report-workload" class="btn btn-outline" onclick="loadWorkloadReport()">Dentist Workload Report</button>
+                        <button id="btn-report-revenue" class="btn btn-outline" onclick="loadRevenueReport()">Treatment Revenue Breakdown (Admin)</button>
+                    </div>
+                    <div id="revenueRestrictedNotice" class="alert alert-danger" style="display: none; margin-top: 15px;">
+                        <strong>🔒 Access Restricted:</strong> Financial revenue breakdowns and executive profit aggregators are restricted to System Administrators.
+                    </div>
+                    <div id="reportContent" style="margin-top: 25px;"></div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Help Section -->
+            <div id="tab-help" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Staff Onboarding & Help Guide</h3>
+                        <p>Step-by-step instructions for receptionists and clinic staff.</p>
+                    </div>
+                    <div class="help-grid">
+                        <div class="help-item">
+                            <h4>1. Authentication & Security</h4>
+                            <p>Staff members must sign in with their given username and password. Sessions are securely maintained per clinic security policies.</p>
+                        </div>
+                        <div class="help-item">
+                            <h4>2. Registering Appointments</h4>
+                            <p>Enter patient full name, residential address, and a 10-digit Sri Lankan phone starting with <code>07</code>. Select the dentist and procedure. The system prevents double-booking the same doctor at the same time.</p>
+                        </div>
+                        <div class="help-item">
+                            <h4>3. Searching Records</h4>
+                            <p>Search via the unique <code>APP-XXXX</code> number to instantly retrieve patient contact, assigned dentist, and procedure details.</p>
+                        </div>
+                        <div class="help-item">
+                            <h4>4. Invoicing & Billing</h4>
+                            <p>Enter the appointment number in the Billing section to calculate the total fee (Consultation Fee + Procedure Base Rate) and generate an official printable clinic receipt.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 6: SMS & Alerts Simulation -->
+            <div id="tab-notifications" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📲 Automated SMS & Electronic Email Notifications</h3>
+                        <p>Real-time audit log of automated SMS appointment reminders and electronic billing receipts dispatched to patients.</p>
+                    </div>
+                    <div class="search-bar" style="margin-bottom: 15px;">
+                        <button class="btn btn-primary" onclick="loadNotifications()">Refresh Notification Logs</button>
+                    </div>
+                    <div id="notificationsContainer">
+                        <p style="color: #64748b;">Click "Refresh Notification Logs" to inspect dispatched SMS alerts and electronic receipts.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
