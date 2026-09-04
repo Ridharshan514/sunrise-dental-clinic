@@ -567,34 +567,51 @@ async function loadAllAppointments() {
 // 4. Calculate & Print Bill (triggers electronic receipt email)
 async function generateBill() {
     const appNo = document.getElementById('billAppNo').value.trim();
+    const box = document.getElementById('billResultBox');
+    const body = document.getElementById('receiptBody');
+    let billAlert = document.getElementById('billAlert');
+    if (!billAlert) {
+        billAlert = document.createElement('div');
+        billAlert.id = 'billAlert';
+        billAlert.className = 'alert alert-danger';
+        box.parentNode.insertBefore(billAlert, box);
+    }
+    billAlert.style.display = 'none';
+
     if (!appNo) {
-        alert('Please enter an appointment number.');
+        billAlert.style.display = 'block';
+        billAlert.innerText = 'Please enter an appointment number.';
         return;
     }
 
-    const res = await fetch(`/api/billing?appNo=${encodeURIComponent(appNo)}`);
-    const box = document.getElementById('billResultBox');
-    const body = document.getElementById('receiptBody');
-
-    if (res.ok) {
-        const bill = await res.json();
-        box.style.display = 'block';
-        body.innerHTML = `
-            <p><strong>Receipt No   :</strong> ${bill.billNumber}</p>
-            <p><strong>Appoint. No  :</strong> ${bill.appointmentNumber}</p>
-            <p><strong>Patient Name :</strong> ${bill.patientName}</p>
-            <p><strong>Consultant   :</strong> ${bill.dentistName}</p>
-            <hr style="margin: 10px 0;">
-            <p><strong>Consultation Fee :</strong> LKR ${bill.consultationFee.toFixed(2)}</p>
-            <p><strong>${bill.treatmentName} :</strong> LKR ${bill.treatmentCost.toFixed(2)}</p>
-            <hr style="margin: 10px 0;">
-            <h3 style="color:#0284c7;">TOTAL PAYABLE: LKR ${bill.totalAmount.toFixed(2)}</h3>
-            <p style="margin-top: 8px;"><strong>Status:</strong> ${bill.paymentStatus}</p>
-            <p style="margin-top: 8px; color: #16a34a; font-weight: 600;">📧 Electronic receipt email dispatched to patient.</p>
-        `;
-    } else {
+    try {
+        const res = await fetch(`/api/billing?appNo=${encodeURIComponent(appNo)}`);
+        if (res.ok) {
+            const bill = await res.json();
+            box.style.display = 'block';
+            body.innerHTML = `
+                <p><strong>Receipt No   :</strong> ${bill.billNumber}</p>
+                <p><strong>Appoint. No  :</strong> ${bill.appointmentNumber}</p>
+                <p><strong>Patient Name :</strong> ${bill.patientName}</p>
+                <p><strong>Consultant   :</strong> ${bill.dentistName}</p>
+                <hr style="margin: 10px 0;">
+                <p><strong>Consultation Fee :</strong> LKR ${bill.consultationFee.toFixed(2)}</p>
+                <p><strong>${bill.treatmentName} :</strong> LKR ${bill.treatmentCost.toFixed(2)}</p>
+                <hr style="margin: 10px 0;">
+                <h3 style="color:#0284c7;">TOTAL PAYABLE: LKR ${bill.totalAmount.toFixed(2)}</h3>
+                <p style="margin-top: 8px;"><strong>Status:</strong> ${bill.paymentStatus}</p>
+                <p style="margin-top: 8px; color: #16a34a; font-weight: 600;">📧 Electronic receipt email dispatched to patient.</p>
+            `;
+        } else {
+            box.style.display = 'none';
+            const errData = await res.json().catch(() => ({}));
+            billAlert.style.display = 'block';
+            billAlert.innerText = 'Billing Failed: ' + (errData.error || ('Cannot generate bill for appointment ' + appNo));
+        }
+    } catch (e) {
         box.style.display = 'none';
-        alert('Failed to compute bill for appointment number ' + appNo);
+        billAlert.style.display = 'block';
+        billAlert.innerText = 'Billing Failed: Network or server error.';
     }
 }
 
